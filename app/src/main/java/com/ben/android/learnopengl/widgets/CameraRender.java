@@ -21,12 +21,13 @@ public class CameraRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFr
     private CameraView cameraView;
     private CameraHelper cameraHelper;
     private SurfaceTexture surfaceTexture;
+    private int[] textures;
     private float[] mtx = new float[16];
+
     private Filter mCameraFilter;
     private Filter mScreenFilter;
-
+    //叠加的滤镜
     private List<Filter> filters = new ArrayList<>();
-    private int[] textures;
 
     public CameraRender(CameraView cameraView) {
         this.cameraView = cameraView;
