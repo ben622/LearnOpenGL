@@ -98,10 +98,11 @@ public class ScreenFilter extends Filter {
         textureBuffer = ByteBuffer.allocateDirect(4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         textureBuffer.clear();
 
-        float[] frags = {1.0f, 0.0f,
+        float[] frags = {
+                0.0f, 1.0f,
                 1.0f, 1.0f,
                 0.0f, 0.0f,
-                0.0f, 1.0f
+                1.0f, 0.0f
         };
         textureBuffer.put(frags);
     }

@@ -94,8 +94,9 @@ public class CameraFilter  extends Filter{
         }
 
 
-        //绑定buffer
+        //绑定纹理
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, frameBufferTextures[0]);
+
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBuffers[0]);
         GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, frameBufferTextures[0], 0);
@@ -168,10 +169,12 @@ public class CameraFilter  extends Filter{
 
         textureBuffer = ByteBuffer.allocateDirect(4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         textureBuffer.clear();
-        float[] frags = { 0.0f, 1.0f,
-                1.0f, 1.0f,
+        //纹理镜像，旋转.
+        float[] frags = {
                 0.0f, 0.0f,
-                1.0f, 0.0f
+                0.0f, 1.0f,
+                1.0f, 0.0f,
+                1.0f, 1.0f,
         };
         textureBuffer.put(frags);
     }
