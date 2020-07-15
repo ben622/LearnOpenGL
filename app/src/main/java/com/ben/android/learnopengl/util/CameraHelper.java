@@ -7,8 +7,8 @@ import android.hardware.Camera;
 public class CameraHelper implements Camera.PreviewCallback {
 
     private static final String TAG = "CameraHelper";
-    public static final int WIDTH = 640;
-    public static final int HEIGHT = 480;
+    public static final int WIDTH = 1280;
+    public static final int HEIGHT = 720;
     private int mCameraId;
     private Camera mCamera;
     private byte[] buffer;

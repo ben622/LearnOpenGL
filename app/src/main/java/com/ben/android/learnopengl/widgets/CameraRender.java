@@ -2,6 +2,7 @@ package com.ben.android.learnopengl.widgets;
 
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.util.Log;
 import com.ben.android.learnopengl.filter.CameraFilter;
 import com.ben.android.learnopengl.filter.Filter;
 import com.ben.android.learnopengl.filter.ScreenFilter;
+import com.ben.android.learnopengl.record.MediaRecord;
 import com.ben.android.learnopengl.util.CameraHelper;
 
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ public class CameraRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFr
     private Filter mScreenFilter;
     //叠加的滤镜
     private List<Filter> filters = new ArrayList<>();
+    private MediaRecord mediaRecord;
 
     public CameraRender(CameraView cameraView) {
         this.cameraView = cameraView;
@@ -48,6 +51,7 @@ public class CameraRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFr
         //init filter
         mCameraFilter = new CameraFilter(cameraView.getContext());
         mScreenFilter = new ScreenFilter(cameraView.getContext());
+
     }
 
 
@@ -59,6 +63,10 @@ public class CameraRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFr
         for (Filter filter : filters) {
             filter.onSurfaceChanged(width, height);
         }
+        if (mediaRecord != null) {
+            mediaRecord.stop();
+        }
+        mediaRecord = new MediaRecord(cameraView.getContext(), "/sdcard/11111.mp4", CameraHelper.HEIGHT, CameraHelper.WIDTH, EGL14.eglGetCurrentContext());
     }
 
     @Override
@@ -75,12 +83,23 @@ public class CameraRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFr
         }
         mScreenFilter.render(textureId, null);
 
+        mediaRecord.render(textureId, surfaceTexture.getTimestamp());
 
     }
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        //请求渲染
         cameraView.requestRender();
+    }
+
+    public void startRecord() {
+        mediaRecord.start();
+    }
+
+    public void stopRecord() {
+        mediaRecord.stop();
+    }
+    public void surfaceDestroyed() {
+        cameraHelper.stopPreview();
     }
 }

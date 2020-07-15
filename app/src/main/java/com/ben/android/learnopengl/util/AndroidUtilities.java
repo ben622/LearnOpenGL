@@ -8,6 +8,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class AndroidUtilities {
+    public static int dp(Context context,float value) {
+        if (value == 0) {
+            return 0;
+        }
+        return (int) Math.ceil(context.getResources().getDisplayMetrics().density * value);
+    }
+
     public static String readRawTextFile(Context context, int rawId) {
         InputStream is = context.getResources().openRawResource(rawId);
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
