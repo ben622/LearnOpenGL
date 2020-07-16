@@ -16,27 +16,24 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        System.loadLibrary("learnopengl");
 
         cameraView = findViewById(R.id.cameraView);
         recordButton = findViewById(R.id.recordButton);
-        recordButton.setOnRecordStateChangedListener(new RecordButton.OnRecordStateChangedListener() {
+        recordButton.setOnLongClickListener(new RecordButton.OnLongClickListener() {
             @Override
-            public void onRecordStart() {
-
-            }
-
-            @Override
-            public void onLongPressRecordStart() {
+            public void onLongClick() {
                 cameraView.startRecord();
             }
 
             @Override
-            public void onRecordStop() {
-                cameraView.stopRecord();
+            public void onNoMinRecord(int currentTime) {
+
             }
 
             @Override
-            public void onZoom(float percentage) {
+            public void onRecordFinishedListener() {
+                cameraView.stopRecord();
 
             }
         });

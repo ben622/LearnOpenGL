@@ -13,10 +13,13 @@ import android.os.HandlerThread;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.annotation.NonNull;
+
 import java.nio.ByteBuffer;
 
 
 public class MediaRecord {
+    private static final String MIME_TYPE = "video/avc";
     private Context context;
     private int width;
     private int height;
@@ -49,13 +52,15 @@ public class MediaRecord {
         });
     }
 
-    private void encode(boolean stop) {
-
+    private void encode(boolean endOfStream) {
+        if (endOfStream) {
+            mediaCodec.signalEndOfInputStream();
+        }
         MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
         while (true) {
             int status = mediaCodec.dequeueOutputBuffer(bufferInfo, 10_000);
             if (status == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                if (!stop) {
+                if (!endOfStream) {
                     break;
                 }
             } else if (status == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
@@ -89,21 +94,22 @@ public class MediaRecord {
         }
     }
 
+
     public void start() {
         try {
-            MediaFormat mediaFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height);
-            //从Surface中获取颜色格式
-            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+            mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
+            MediaFormat mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
             mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 400000);
             mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 400000);
+            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
             if (Build.VERSION.SDK_INT >= 21) {
                 mediaFormat.setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileHigh);
                 if (Build.VERSION.SDK_INT >= 23) {
                     mediaFormat.setInteger(MediaFormat.KEY_LEVEL, MediaCodecInfo.CodecProfileLevel.AVCLevel5);
                 }
             }
-            mediaCodec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);
+
             mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             mSurface = mediaCodec.createInputSurface();
 
@@ -126,6 +132,7 @@ public class MediaRecord {
 
     public void stop() {
         if (!isRecording) return;
+        isRecording = false;
         mHandler.post(() -> {
             encode(true);
             mediaCodec.stop();

@@ -81,7 +81,7 @@ public class CameraRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFr
         for (Filter filter : filters) {
             textureId = filter.render(textureId, null);
         }
-        mScreenFilter.render(textureId, null);
+        textureId = mScreenFilter.render(textureId, null);
 
         mediaRecord.render(textureId, surfaceTexture.getTimestamp());
 

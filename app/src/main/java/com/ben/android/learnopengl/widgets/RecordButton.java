@@ -1,510 +1,302 @@
 package com.ben.android.learnopengl.widgets;
-
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
-import android.graphics.Xfermode;
 import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.ben.android.learnopengl.util.AndroidUtilities;
-
-
 /**
- * Record Button
- * <p>
- * Created by peng on 2018/9/12.
+ * Created by yufs on 2017/7/4.
  */
 
-public class RecordButton extends View {
-
+public class RecordButton extends View{
+    private static final int WHAT_LONG_CLICK = 1;
+    private Paint mBigCirclePaint;
+    private Paint mSmallCirclePaint;
+    private Paint mProgressCirclePaint;
+    private int mHeight;//当前View的高
+    private int mWidth;//当前View的宽
+    private float mInitBitRadius;
+    private float mInitSmallRadius;
+    private float mBigRadius;
+    private float mSmallRadius;
+    private long mStartTime;
+    private long mEndTime;
     private Context mContext;
+    private boolean isRecording;//录制状态
+    private boolean isMaxTime;//达到最大录制时间
+    private float mCurrentProgress;//当前进度
 
-    /**
-     * 绘制中间的画笔
-     */
-    private Paint mRectPaint;
+    private long mLongClickTime=500;//长按最短时间(毫秒)，
+    private int mTime=5;//录制最大时间s
+    private int mMinTime=3;//录制最短时间
+    private int mProgressColor;//进度条颜色
+    private float mProgressW=18f;//圆环宽度
 
-    /**
-     * 圆环画笔
-     */
-    private Paint mCirclePaint;
-
-    /**
-     * 矩形圆角(corner的值等于矩形宽度的一半时，矩形就是圆形了)
-     */
-    private float corner;
-
-    /**
-     * 圆环半径
-     */
-    private float circleRadius;
-
-    /**
-     * 圆环宽度
-     */
-    private float circleStrokeWidth;
-
-    /**
-     * 矩形宽
-     */
-    private float rectWidth;
-
-    /**
-     * 圆环内半径
-     */
-    private float mMinCircleRadius;
-
-    /**
-     * 最大圆环半径
-     */
-    private float mMaxCircleRadius;
-
-    /**
-     * 最小矩形宽
-     */
-    private float mMinRectWidth;
-
-    /**
-     * 最大矩形宽
-     */
-    private float mMaxRectWidth;
-
-    /**
-     * 最小圆角
-     */
-    private float mMinCorner;
-
-    /**
-     * 最大圆角
-     */
-    private float mMaxCorner;
-
-    /**
-     * 最小圆环宽度
-     */
-    private float mMinCircleStrokeWidth;
-
-    /**
-     * 最大圆环宽度
-     */
-    private float mMaxCircleStrokeWidth;
-
-    /**
-     * 矩形
-     */
-    private RectF mRectF = new RectF();
-
-    /**
-     * 自定义枚举类，标明录制几种状态，默认ORIGIN
-     */
-    private RecordMode mRecordMode = RecordMode.LONG_CLICK;
-
-    /**
-     * 开始动画集合
-     */
-    private AnimatorSet mBeginAnimatorSet = new AnimatorSet();
-
-    /**
-     * 结束动画集合
-     */
-    private AnimatorSet mEndAnimatorSet = new AnimatorSet();
-
-    /**
-     * {@link (PorterDuff.Mode)}
-     */
-    private Xfermode mXfermode = new PorterDuffXfermode(PorterDuff.Mode.DST_OUT);
+    private boolean isPressed;//当前手指处于按压状态
+    private ValueAnimator mProgressAni;//圆弧进度变化
 
 
-    private Handler mHandler = new Handler();
-
-
-    private ClickRunnable mClickRunnable = new ClickRunnable();
-
-    /**
-     * 自定义录制按钮监听接口
-     */
-    private OnRecordStateChangedListener mOnRecordStateChangedListener;
-
-    private float mInitX;
-
-    private float mInitY;
-
-    /**
-     * Down X
-     */
-    private float mDownRawX;
-
-    /**
-     * Down Y
-     */
-    private float mDownRawY;
-
-    /**
-     * 滑动比例，抖音根据滑动 调整焦距
-     */
-    private float mInfectionPoint;
-
-//    private ScrollDirection mScrollDirection;
-
-
-    /**
-     * Cancel Flag
-     */
-    private boolean mHasCancel = false;
-
-    public RecordButton(Context context) {
-        this(context, null);
+    public RecordButton(Context context ) {
+        super(context);
+        init(context,null);
     }
 
-    public RecordButton(Context context,  AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public RecordButton(Context context,  AttributeSet attrs, int defStyleAttr) {
+    public RecordButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mContext = context;
-        init();
+        init(context,attrs);
     }
 
-    /**
-     * 初始化
-     */
-    private void init() {
-        setLayerType(LAYER_TYPE_HARDWARE, null);
-        mRectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mRectPaint.setStyle(Paint.Style.FILL);
-        mRectPaint.setColor(Color.parseColor("#F91069")); //内部录制按钮颜色
+    public RecordButton(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init(context,attrs);
+    }
 
-        mCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mCirclePaint.setColor(Color.parseColor("#66F6A623"));
+    private void init(Context context,AttributeSet attrs) {
+        this.mContext=context;
+        mMinTime=0;
+        mTime=10;
+        mProgressW=12f;
+        mProgressColor = Color.parseColor("#6ABF66");
+        //初始画笔抗锯齿、颜色
+        mBigCirclePaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBigCirclePaint.setColor(Color.parseColor("#DDDDDD"));
 
-        mMinCircleStrokeWidth = AndroidUtilities.dp(mContext, 3);
-        mMaxCircleStrokeWidth = AndroidUtilities.dp(mContext, 12);
-        circleStrokeWidth = mMinCircleStrokeWidth;
-        mCirclePaint.setStrokeWidth(circleStrokeWidth);
+        mSmallCirclePaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        mSmallCirclePaint.setColor(Color.parseColor("#FFFFFF"));
+
+        mProgressCirclePaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        mProgressCirclePaint.setColor(mProgressColor);
+
+        mProgressAni= ValueAnimator.ofFloat(0, 360f);
+        mProgressAni.setDuration(mTime*1000);
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
-        int width = getMeasuredWidth();
-        int height = getMeasuredHeight();
-
-        int centerX = width / 2;
-        int centerY = height / 2;
-
-        mMaxRectWidth = width / 3;
-        mMinRectWidth = mMaxRectWidth * 0.6f;
-
-        mMinCircleRadius = mMaxRectWidth / 2 + mMinCircleStrokeWidth + AndroidUtilities.dp(mContext, 5);
-        mMaxCircleRadius = width / 2 - mMaxCircleStrokeWidth;
-
-        mMinCorner = AndroidUtilities.dp(mContext, 5);
-        mMaxCorner = mMaxRectWidth / 2;
-
-        if (rectWidth == 0) {
-            rectWidth = mMaxRectWidth;
-        }
-        if (circleRadius == 0) {
-            circleRadius = mMinCircleRadius;
-        }
-        if (corner == 0) {
-            corner = rectWidth / 2;
-        }
-
-        //初始圆环外边界
-        mCirclePaint.setColor(Color.parseColor("#F6A623"));
-        canvas.drawCircle(centerX, centerY, circleRadius, mCirclePaint);
-        mCirclePaint.setXfermode(mXfermode);
-        //初始圆环内边界
-        mCirclePaint.setColor(Color.parseColor("#9900FF"));
-        canvas.drawCircle(centerX, centerY, circleRadius - circleStrokeWidth, mCirclePaint);
-        mCirclePaint.setXfermode(null);
-
-        //初始画内圆
-        mRectF.left = centerX - rectWidth / 2;
-        mRectF.right = centerX + rectWidth / 2;
-        mRectF.top = centerY - rectWidth / 2;
-        mRectF.bottom = centerY + rectWidth / 2;
-        canvas.drawRoundRect(mRectF, corner, corner, mRectPaint);
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        mWidth = MeasureSpec.getSize(widthMeasureSpec);
+        mHeight=MeasureSpec.getSize(heightMeasureSpec);
+        mInitBitRadius=mBigRadius= mWidth/2*0.75f;
+        mInitSmallRadius=mSmallRadius= mBigRadius*0.75f;
     }
+
+    @Override
+    protected void onDraw(final Canvas canvas) {
+        super.onDraw(canvas);
+        //绘制外圆
+        canvas.drawCircle(mWidth/2,mHeight/2,mBigRadius,mBigCirclePaint);
+        //绘制内圆
+        canvas.drawCircle(mWidth/2,mHeight/2,mSmallRadius,mSmallCirclePaint);
+        //录制的过程中绘制进度条
+        if(isRecording){
+            drawProgress(canvas);
+        }
+    }
+
+    /**
+     * 绘制圆形进度
+     * @param canvas
+     */
+    private void drawProgress(Canvas canvas) {
+        mProgressCirclePaint.setStrokeWidth(mProgressW);
+        mProgressCirclePaint.setStyle(Paint.Style.STROKE);
+        //用于定义的圆弧的形状和大小的界限
+        RectF oval = new RectF(mWidth/2-(mBigRadius-mProgressW/2), mHeight/2-(mBigRadius-mProgressW/2), mWidth/2+(mBigRadius-mProgressW/2),mHeight/2+(mBigRadius-mProgressW/2));
+        //根据进度画圆弧
+        canvas.drawArc(oval, -90, mCurrentProgress, false, mProgressCirclePaint);
+    }
+
+    private Handler mHandler=new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case WHAT_LONG_CLICK:
+                    //长按事件触发
+                    if(onLongClickListener!=null) {
+                        onLongClickListener.onLongClick();
+                    }
+                    //内外圆动画，内圆缩小，外圆放大
+                    startAnimation(mBigRadius,mBigRadius*1.33f,mSmallRadius,mSmallRadius*0.7f);
+                    break;
+            }
+        }
+    } ;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
-        switch (event.getAction()) {
+        switch (event.getAction()){
             case MotionEvent.ACTION_DOWN:
-                if (mRecordMode == RecordMode.ORIGIN && inBeginRange(event)) {
-                    mDownRawX = event.getRawX();
-                    mDownRawY = event.getRawY();
-                    mHandler.postDelayed(mClickRunnable, 200);
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (!mHasCancel) {
-                    if (mRecordMode == RecordMode.LONG_CLICK) {
-//                        ScrollDirection mOldDirection = mScrollDirection;
-//                        float oldY = getY();
-//                        setX(mInitX+event.getRawX()-mDownRawX);
-//                        setY(mInitY+event.getRawY()-mDownRawY);
-//                        float newY = getY();
-
-//                        if (newY <= oldY) {
-//                            mScrollDirection = ScrollDirection.UP;
-//                        } else {
-//                            mScrollDirection = ScrollDirection.DOWN;
-//                        }
-
-//                        if (mOldDirection != mScrollDirection) {
-//                            mInfectionPoint = oldY;
-//                        }
-                        float zoomPercentage = (mInfectionPoint - getY()) / mInitY;
-                        if (mOnRecordStateChangedListener != null) {
-                            mOnRecordStateChangedListener.onZoom(zoomPercentage);
-                        }
-                    }
-                }
+                isPressed=true;
+                mStartTime=System.currentTimeMillis();
+                Message mMessage=Message.obtain();
+                mMessage.what=WHAT_LONG_CLICK;
+                mHandler.sendMessageDelayed(mMessage,mLongClickTime);
                 break;
             case MotionEvent.ACTION_UP:
-                if (!mHasCancel) {
-                    if (mRecordMode == RecordMode.LONG_CLICK) {
-                        if (mOnRecordStateChangedListener != null) {
-                            mOnRecordStateChangedListener.onRecordStop();
+                isPressed=false;
+                isRecording=false;
+                mEndTime=System.currentTimeMillis();
+                if(mEndTime-mStartTime<mLongClickTime){
+                    mHandler.removeMessages(WHAT_LONG_CLICK);
+                    if(onClickListener!=null)
+                        onClickListener.onClick();
+                }else{
+                    startAnimation(mBigRadius,mInitBitRadius,mSmallRadius,mInitSmallRadius);//手指离开时动画复原
+                    if(mProgressAni!=null&&mProgressAni.getCurrentPlayTime()/1000<mMinTime&&!isMaxTime){
+                        if(onLongClickListener!=null){
+                            onLongClickListener.onNoMinRecord(mMinTime);
                         }
-                        resetLongClick();
-                    } else if (mRecordMode == RecordMode.ORIGIN && inBeginRange(event)) {
-                        mHandler.removeCallbacks(mClickRunnable);
-                        mRecordMode = RecordMode.SINGLE_CLICK;
-                        if (mOnRecordStateChangedListener != null) {
-                            mOnRecordStateChangedListener.onRecordStart();
+                        mProgressAni.cancel();
+                    }else{
+                        //录制完成
+                        if(onLongClickListener!=null&&!isMaxTime){
+                            onLongClickListener.onRecordFinishedListener();
                         }
-//                        startBeginAnimation();
-                    } else if (mRecordMode == RecordMode.SINGLE_CLICK && inEndRange(event)) {
-                        if (mOnRecordStateChangedListener != null) {
-                            mOnRecordStateChangedListener.onRecordStop();
-                        }
-                        resetSingleClick();
                     }
-                } else {
-                    mHasCancel = false;
                 }
-                break;
-            default:
                 break;
         }
         return true;
+
     }
 
-    private boolean inBeginRange(MotionEvent event) {
-        int centerX = getMeasuredWidth() / 2;
-        int centerY = getMeasuredHeight() / 2;
-        int minX = (int) (centerX - mMinCircleRadius);
-        int maxX = (int) (centerX + mMinCircleRadius);
-        int minY = (int) (centerY - mMinCircleRadius);
-        int maxY = (int) (centerY + mMinCircleRadius);
-        boolean isXInRange = event.getX() >= minX && event.getX() <= maxX;
-        boolean isYInRange = event.getY() >= minY && event.getY() <= maxY;
-        return isXInRange && isYInRange;
-    }
-
-    private boolean inEndRange(MotionEvent event) {
-        int minX = 0;
-        int maxX = getMeasuredWidth();
-        int minY = 0;
-        int maxY = getMeasuredHeight();
-        boolean isXInRange = event.getX() >= minX && event.getX() <= maxX;
-        boolean isYInRange = event.getY() >= minY && event.getY() <= maxY;
-        return isXInRange && isYInRange;
-    }
-
-    private void resetLongClick() {
-        mRecordMode = RecordMode.ORIGIN;
-        mBeginAnimatorSet.cancel();
-        startEndAnimation();
-        setX(mInitX);
-        setY(mInitY);
-    }
-
-    private void resetSingleClick() {
-        mRecordMode = RecordMode.ORIGIN;
-        mBeginAnimatorSet.cancel();
-        startEndAnimation();
-    }
-
-    public void reset() {
-        if (mRecordMode == RecordMode.LONG_CLICK) {
-            resetLongClick();
-            mRecordMode = RecordMode.ORIGIN;
-        } else if (mRecordMode == RecordMode.SINGLE_CLICK) {
-            resetSingleClick();
-            mRecordMode = RecordMode.ORIGIN;
-        } else if (mRecordMode == RecordMode.ORIGIN) {
-            if (mBeginAnimatorSet.isRunning()) {
-                mHasCancel = true;
-                mBeginAnimatorSet.cancel();
-                startEndAnimation();
-                mHandler.removeCallbacks(mClickRunnable);
-                mRecordMode = RecordMode.ORIGIN;
+    private void startAnimation(float bigStart,float bigEnd, float smallStart,float smallEnd) {
+        ValueAnimator bigObjAni=ValueAnimator.ofFloat(bigStart,bigEnd);
+        bigObjAni.setDuration(150);
+        bigObjAni.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mBigRadius= (float) animation.getAnimatedValue();
+                invalidate();
             }
-        }
+        });
 
-    }
+        ValueAnimator smallObjAni=ValueAnimator.ofFloat(smallStart,smallEnd);
+        smallObjAni.setDuration(150);
+        smallObjAni.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mSmallRadius= (float) animation.getAnimatedValue();
+                invalidate();
+            }
+        });
 
-    public void startClockRecord() {
-        if (mRecordMode == RecordMode.ORIGIN) {
-            startBeginAnimation();
-            mRecordMode = RecordMode.SINGLE_CLICK;
-        }
-    }
+        bigObjAni.start();
+        smallObjAni.start();
 
-    public void startBeginAnimation() {
-        AnimatorSet startAnimatorSet = new AnimatorSet();
-        //矩形动画
-        ObjectAnimator cornerAnimator = ObjectAnimator.ofFloat(this, "corner",
-                mMaxCorner, mMinCorner)
-                .setDuration(500);
-        ObjectAnimator rectSizeAnimator = ObjectAnimator.ofFloat(this, "rectWidth",
-                mMaxRectWidth, mMinRectWidth)
-                .setDuration(500);
+        smallObjAni.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                isRecording=false;
+            }
 
-        //外圈圆环
-        ObjectAnimator radiusAnimator = ObjectAnimator.ofFloat(this, "circleRadius",
-                mMinCircleRadius, mMaxCircleRadius)
-                .setDuration(500);
-        startAnimatorSet.playTogether(cornerAnimator, rectSizeAnimator, radiusAnimator);
-
-        //圆环抖动 动画
-        ObjectAnimator circleWidthAnimator = ObjectAnimator.ofFloat(this, "circleStrokeWidth",
-                mMinCircleStrokeWidth, mMaxCircleStrokeWidth, mMinCircleStrokeWidth)
-                .setDuration(1500);
-        circleWidthAnimator.setRepeatCount(ObjectAnimator.INFINITE);
-
-        mBeginAnimatorSet.playSequentially(startAnimatorSet, circleWidthAnimator);
-        mBeginAnimatorSet.start();
-    }
-
-    private void startEndAnimation() {
-        ObjectAnimator cornerAnimator = ObjectAnimator.ofFloat(this, "corner",
-                mMinCorner, mMaxCorner)
-                .setDuration(500);
-        ObjectAnimator rectSizeAnimator = ObjectAnimator.ofFloat(this, "rectWidth",
-                mMinRectWidth, mMaxRectWidth)
-                .setDuration(500);
-        ObjectAnimator radiusAnimator = ObjectAnimator.ofFloat(this, "circleRadius",
-                mMaxCircleRadius, mMinCircleRadius)
-                .setDuration(500);
-        ObjectAnimator circleWidthAnimator = ObjectAnimator.ofFloat(this, "circleStrokeWidth",
-                mMaxCircleStrokeWidth, mMinCircleStrokeWidth)
-                .setDuration(500);
-
-        mEndAnimatorSet.playTogether(cornerAnimator, rectSizeAnimator, radiusAnimator, circleWidthAnimator);
-        mEndAnimatorSet.start();
-    }
-
-    public void setCorner(float corner) {
-        this.corner = corner;
-        invalidate();
-    }
-
-    public void setCircleRadius(float circleRadius) {
-        this.circleRadius = circleRadius;
-    }
-
-    public void setCircleStrokeWidth(float circleStrokeWidth) {
-        this.circleStrokeWidth = circleStrokeWidth;
-        invalidate();
-    }
-
-    public void setRectWidth(float rectWidth) {
-        this.rectWidth = rectWidth;
-    }
-
-    class ClickRunnable implements Runnable {
-
-        @Override
-        public void run() {
-            if (!mHasCancel) {
-                mRecordMode = RecordMode.LONG_CLICK;
-                mInitX = getX();
-                mInitY = getY();
-                mInfectionPoint = mInitY;
-                if (mOnRecordStateChangedListener != null) {
-                    mOnRecordStateChangedListener.onLongPressRecordStart();
-                    startBeginAnimation();
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                //开始绘制圆形进度
+                if(isPressed){
+                    isRecording=true;
+                    isMaxTime=false;
+                    startProgressAnimation();
                 }
-//                mScrollDirection = ScrollDirection.UP;
             }
-        }
+
+
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+
     }
 
-    public void setOnRecordStateChangedListener(OnRecordStateChangedListener listener) {
-        this.mOnRecordStateChangedListener = listener;
+    /**
+     * 圆形进度变化动画
+     */
+    private void startProgressAnimation() {
+        mProgressAni.start();
+        mProgressAni.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mCurrentProgress= (float) animation.getAnimatedValue();
+                invalidate();
+            }
+        });
+
+        mProgressAni.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                //录制动画结束时，即为录制全部完成
+                if(onLongClickListener!=null&&isPressed){
+                    isPressed=false;
+                    isMaxTime=true;
+                    onLongClickListener.onRecordFinishedListener();
+                    startAnimation(mBigRadius,mInitBitRadius,mSmallRadius,mInitSmallRadius);
+                    //影藏进度进度条
+                    mCurrentProgress=0;
+                    invalidate();
+                }
+
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
     }
 
-    public interface OnRecordStateChangedListener {
+    /**
+     * 长按监听器
+     */
+    public interface OnLongClickListener{
+        void onLongClick();
+        //未达到最小录制时间
+        void onNoMinRecord(int currentTime);
+        //录制完成
+        void onRecordFinishedListener();
+    }
+    public OnLongClickListener onLongClickListener;
 
-        /**
-         * 开始录制
-         */
-        void onRecordStart();
-
-        /**
-         * 开始长按录制
-         */
-        void onLongPressRecordStart();
-
-        /**
-         * 结束录制
-         */
-        void onRecordStop();
-
-        /**
-         * 缩放百分比
-         *
-         * @param percentage 百分比值 0%~100% 对应缩放支持的最小和最大值 默认最小1.0
-         */
-        void onZoom(float percentage);
+    public void setOnLongClickListener(OnLongClickListener onLongClickListener) {
+        this.onLongClickListener = onLongClickListener;
     }
 
-    public enum RecordMode {
-        /**
-         * 单击录制模式
-         */
-        SINGLE_CLICK,
-        /**
-         * 长按录制模式
-         */
-        LONG_CLICK,
-        /**
-         * 初始化
-         */
-        ORIGIN;
+    /**
+     * 点击监听器
+     */
+    public interface OnClickListener{
+        void onClick();
+    }
+    public OnClickListener onClickListener;
 
-        RecordMode() {
-
-        }
+    public void setOnClickListener(OnClickListener onClickListener) {
+        this.onClickListener = onClickListener;
     }
 
-    private enum ScrollDirection {
-        /**
-         * 滑动方向 上
-         */
-        UP,
-        /**
-         * 滑动方向 下
-         */
-        DOWN;
-
-        ScrollDirection() {
-
-        }
-    }
 }
