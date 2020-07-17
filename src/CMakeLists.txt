@@ -3,13 +3,13 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
 
 set(PRELIB_ROOT ${CMAKE_SOURCE_DIR})
 set(SEETAFACE_LANDMARKER_DIR ${PRELIB_ROOT}/seetaface2/landmarker)
 set(SEETAFACE_SEETANET_DIR ${PRELIB_ROOT}/seetaface2/seetanet)
 
 INCLUDE_DIRECTORIES(
+        ${PRELIB_ROOT}/
         ${SEETAFACE_LANDMARKER_DIR}/
         ${SEETAFACE_SEETANET_DIR}/include_inner
         ${SEETAFACE_SEETANET_DIR}/include_inner/layers
@@ -25,7 +25,7 @@ ADD_LIBRARY(opencv
 SET_TARGET_PROPERTIES(opencv
         PROPERTIES
         IMPORTED_LOCATION
-        ${PRELIB_ROOT}/libs/${ANDROID_ABI}/libopencv_java3.so)
+        ${PRELIB_ROOT}/libs/${ANDROID_ABI}/libopencv_java4.so)
 
 
 
@@ -48,11 +48,12 @@ ADD_LIBRARY(seetaface_anet
 
 
 FILE(GLOB SEETAFACE_LANDMARKER_SRCS "${SEETAFACE_LANDMARKER_DIR}/*.cpp")
+FILE(GLOB SRCS "${PRELIB_ROOT}/*.cpp")
 ADD_LIBRARY(
             learnopengl
             SHARED
             ${SEETAFACE_LANDMARKER_SRCS}
-            native-lib.cpp )
+            ${SRCS} )
 
 FIND_LIBRARY(
               log-lib

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.ben.android.learnopengl.filter.BigEyesFilter;
 import com.ben.android.learnopengl.util.AndroidUtilities;
 import com.ben.android.learnopengl.widgets.CameraView;
 import com.ben.android.learnopengl.widgets.RecordButton;
@@ -16,7 +17,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        System.loadLibrary("learnopengl");
 
         cameraView = findViewById(R.id.cameraView);
         recordButton = findViewById(R.id.recordButton);
@@ -37,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+
     }
 
 }
