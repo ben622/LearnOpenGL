@@ -15,7 +15,8 @@ import java.lang.ref.WeakReference;
 
 public class FaceTracking {
     private static final String OPENCV_MODEL = "lbpcascade_frontalface.xml";
-    private static final String SEETAFACE_MODEL = "pd_2_00_pts5.dat";
+    private static final String SEETAFACE_5_MODEL = "pd_2_00_pts5.dat";
+    private static final String SEETAFACE_81_MODEL = "pd_2_00_pts81.dat";
     private static final int WHAT_DETECTOR = 0X10;
     private Handler mHandler;
 
@@ -56,7 +57,7 @@ public class FaceTracking {
 
     private void inital() {
         opencvModelPath = AndroidUtilities.copyAssetsFileToSdcard(contextWeakReference.get(), OPENCV_MODEL);
-        seetaModelPath = AndroidUtilities.copyAssetsFileToSdcard(contextWeakReference.get(), SEETAFACE_MODEL);
+        seetaModelPath = AndroidUtilities.copyAssetsFileToSdcard(contextWeakReference.get(), SEETAFACE_5_MODEL);
         if (TextUtils.isEmpty(opencvModelPath) || TextUtils.isEmpty(seetaModelPath))
             Log.e("FaceTracking", "model path error!");
         ptr = nativeInit(opencvModelPath, seetaModelPath);

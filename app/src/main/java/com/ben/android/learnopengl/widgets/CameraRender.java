@@ -5,13 +5,14 @@ import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.util.Log;
 
 import com.ben.android.learnopengl.face.FaceTracking;
+import com.ben.android.learnopengl.filter.BeautyFilter;
 import com.ben.android.learnopengl.filter.BigEyesFilter;
 import com.ben.android.learnopengl.filter.CameraFilter;
 import com.ben.android.learnopengl.filter.Filter;
 import com.ben.android.learnopengl.filter.ScreenFilter;
+import com.ben.android.learnopengl.filter.StickerEarFilter;
 import com.ben.android.learnopengl.record.MediaRecord;
 import com.ben.android.learnopengl.util.CameraHelper;
 
@@ -55,7 +56,10 @@ public class CameraRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFr
         //init filter
         mCameraFilter = new CameraFilter(cameraView.getContext());
         mScreenFilter = new ScreenFilter(cameraView.getContext());
+        filters.add(new BeautyFilter(cameraView.getContext()));
         filters.add(new BigEyesFilter(cameraView.getContext()));
+        filters.add(new StickerEarFilter(cameraView.getContext()));
+        //filters.add(new LandmarkerFilter(cameraView.getContext()));
 
     }
 
@@ -94,6 +98,9 @@ public class CameraRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFr
         for (Filter filter : filters) {
             if (filter instanceof BigEyesFilter) {
                 ((BigEyesFilter) filter).setFace(faceTracking.getFace());
+            }
+            if (filter instanceof StickerEarFilter) {
+                ((StickerEarFilter) filter).setFace(faceTracking.getFace());
             }
             textureId = filter.render(textureId, null);
         }

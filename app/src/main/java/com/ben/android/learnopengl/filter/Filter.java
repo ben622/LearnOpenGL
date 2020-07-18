@@ -30,6 +30,9 @@ public abstract class Filter {
     protected void initialize(){
         //Subclass implementation
     }
+    protected void release() {
+        //Subclass implementation
+    }
     public int render(int texture, float[] matrix){
         //Subclass implementation
         return texture;

@@ -12,7 +12,7 @@ uniform vec2 right_eye;//右眼
 //rmax: 放大区域
 float fs(float r, float rmax){
     //放大系数
-    float a = 0.4;
+    float a = 0.5;
     return (1.0 - pow((r/rmax -1.0), 2.0) *a);
 }
 

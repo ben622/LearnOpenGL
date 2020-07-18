@@ -41,18 +41,34 @@ public class Face {
         return new Face(new ArrayList<>(5), new ArrayList<>(5), 0, 0, 0, 0);
     }
 
+    /**
+     * Native Call this.
+     */
     public void clearFaces() {
         this.faces.clear();
     }
 
+    /**
+     * Native Call this.
+     */
     public void clearMarker() {
         this.marker.clear();
-
     }
+
+    /**
+     * Native Call this.
+     *
+     * @param point created in native.
+     */
     public void addFacePointF(PointF point) {
         this.faces.add(point);
     }
 
+    /**
+     * Native Call this.
+     *
+     * @param point created in native.
+     */
     public void addMarkerPointF(PointF point) {
         this.marker.add(point);
     }

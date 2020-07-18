@@ -46,7 +46,7 @@ void FaceTrack::detector(Mat src, vector<Rect2f> &rects,int cameraId) {
         Rect face = faces[0];
         rects.push_back(Rect2f(face.x, face.y, face.width, face.height));
         //人脸关键点检测
-        seeta::ImageData simage(src.cols, src.rows, 3);
+        /*seeta::ImageData simage(src.cols, src.rows, 3);
         simage.data = src.data;
         //限定人脸位置
         SeetaRect bound = {face.x,face.y,face.width,face.height};
@@ -54,7 +54,7 @@ void FaceTrack::detector(Mat src, vector<Rect2f> &rects,int cameraId) {
         for (int i = 0; i < points.size(); ++i) {
             SeetaPointF point = points[i];
             rects.push_back(Rect2f(point.x, point.y, 0, 0));
-        }
+        }*/
     }
 
 }

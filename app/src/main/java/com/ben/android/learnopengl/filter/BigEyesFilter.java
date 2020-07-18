@@ -2,6 +2,7 @@ package com.ben.android.learnopengl.filter;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 
 import com.ben.android.learnopengl.R;
 import com.ben.android.learnopengl.face.Face;
@@ -89,7 +90,7 @@ public class BigEyesFilter extends FrameBufferFilter {
          */
         //左眼的x 、y  opengl : 0-1
         float x = mFace.getMarker().get(0).x / mFace.getInputWidth();
-        float y = mFace.getMarker().get(0).x / mFace.getInputHeight();
+        float y = mFace.getMarker().get(0).y / mFace.getInputHeight();
         left.clear();
         left.put(x);
         left.put(y);
@@ -98,7 +99,7 @@ public class BigEyesFilter extends FrameBufferFilter {
 
         //右眼的x、y
         x = mFace.getMarker().get(1).x / mFace.getInputWidth();
-        y = mFace.getMarker().get(1).x / mFace.getInputHeight();
+        y = mFace.getMarker().get(1).y / mFace.getInputHeight();
         right.clear();
         right.put(x);
         right.put(y);
